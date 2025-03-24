@@ -3,7 +3,6 @@
 import { useEffect, useState } from "react"
 import dynamic from "next/dynamic"
 
-// Dynamically import the map component with no SSR
 const MapClientNoSSR = dynamic(() => import("./map-client"), {
   ssr: false,
   loading: () => (
@@ -32,7 +31,6 @@ export default function MapWrapper({
 
   useEffect(() => {
     if (shouldRemount) {
-      // Wait for React to finish its current update cycle
       const timeoutId = setTimeout(() => {
         setMountKey(prev => prev + 1)
       }, 0)
