@@ -1,4 +1,3 @@
-// Define the types
 interface SoilData {
   soilType: string
   ph: number
@@ -40,13 +39,11 @@ interface AnalysisData {
   rotationPlans: any
 }
 
-// Get API keys from environment variables
 const USDA_API_KEY = process.env.USDA_API_KEY
 const OPENWEATHER_API_KEY = process.env.NEXT_PUBLIC_OPENWEATHER_API_KEY
 const TOMTOM_API_KEY = process.env.NEXT_PUBLIC_TOMTOM_API_KEY
 const PUBLIC_GEMINI_API_KEY = process.env.NEXT_PUBLIC_GEMINI_API_KEY
 
-// Get state from coordinates using TomTom API
 async function getStateFromCoordinates(lat: number, lng: number): Promise<string> {
   try {
     const url = `https://api.tomtom.com/search/2/reverseGeocode/${lat},${lng}.json?key=${TOMTOM_API_KEY}&radius=100`
@@ -60,25 +57,22 @@ async function getStateFromCoordinates(lat: number, lng: number): Promise<string
 
     if (data.addresses && data.addresses.length > 0) {
       const address = data.addresses[0].address
-      // Get state code (e.g., "KY" for Kentucky)
       return address.countrySubdivision || address.countrySecondarySubdivision || "KY"
     }
 
-    return "KY" // Default to Kentucky if no state found
+    return "KY"
   } catch (error) {
     console.error("Error getting state from coordinates:", error)
-    return "KY" // Default to Kentucky on error
+    return "KY"
   }
 }
 
-// Process USDA crop statistics data
 function processCropStats(usdaData: any): any[] {
   try {
     if (!usdaData || !usdaData.data) {
       return []
     }
 
-    // Extract relevant crop data
     const cropStats = usdaData.data.map((item: any) => {
       return {
         crop: item.commodity_desc,
@@ -88,7 +82,6 @@ function processCropStats(usdaData: any): any[] {
       }
     })
 
-    // Sort by value (if numeric)
     return cropStats.sort((a: any, b: any) => {
       const aValue = Number.parseFloat(a.value.replace(/,/g, ""))
       const bValue = Number.parseFloat(b.value.replace(/,/g, ""))
@@ -105,7 +98,6 @@ function processCropStats(usdaData: any): any[] {
   }
 }
 
-// Get location name from coordinates using TomTom API
 async function getLocationName(lat: number, lng: number): Promise<string> {
   try {
     const url = `https://api.tomtom.com/search/2/reverseGeocode/${lat},${lng}.json?key=${TOMTOM_API_KEY}&radius=100`
@@ -120,7 +112,6 @@ async function getLocationName(lat: number, lng: number): Promise<string> {
     if (data.addresses && data.addresses.length > 0) {
       const address = data.addresses[0].address
 
-      // Construct location name from address components
       const components = []
 
       if (address.municipality) {
@@ -147,10 +138,8 @@ async function getLocationName(lat: number, lng: number): Promise<string> {
   }
 }
 
-// Get weather data from coordinates using OpenWeather API
 async function getWeatherData(lat: number, lng: number): Promise<WeatherData> {
   try {
-    // Get current weather
     const currentUrl = `https://api.openweathermap.org/data/2.5/weather?lat=${lat}&lon=${lng}&units=imperial&appid=${OPENWEATHER_API_KEY}`
     const currentResponse = await fetch(currentUrl)
 
@@ -160,7 +149,6 @@ async function getWeatherData(lat: number, lng: number): Promise<WeatherData> {
 
     const currentData = await currentResponse.json()
 
-    // Get forecast for next few days
     const forecastUrl = `https://api.openweathermap.org/data/2.5/forecast?lat=${lat}&lon=${lng}&units=imperial&appid=${OPENWEATHER_API_KEY}`
     const forecastResponse = await fetch(forecastUrl)
 
@@ -170,12 +158,10 @@ async function getWeatherData(lat: number, lng: number): Promise<WeatherData> {
 
     const forecastData = await forecastResponse.json()
 
-    // Process current weather data
     const temperature = currentData.main.temp
     const humidity = currentData.main.humidity
     const windSpeed = currentData.wind.speed
 
-    // Get rainfall from last 3 hours if available
     let rainfall = 0
     if (currentData.rain && currentData.rain["3h"]) {
       rainfall = currentData.rain["3h"]
@@ -183,7 +169,6 @@ async function getWeatherData(lat: number, lng: number): Promise<WeatherData> {
       rainfall = currentData.rain["1h"]
     }
 
-    // Process forecast data - get one entry per day
     const forecast = []
     const processedDates = new Set()
 
@@ -191,7 +176,6 @@ async function getWeatherData(lat: number, lng: number): Promise<WeatherData> {
       for (const item of forecastData.list) {
         const date = new Date(item.dt * 1000).toLocaleDateString()
 
-        // Only take one reading per day
         if (!processedDates.has(date)) {
           processedDates.add(date)
 
@@ -206,7 +190,6 @@ async function getWeatherData(lat: number, lng: number): Promise<WeatherData> {
             rainfall: dailyRainfall,
           })
 
-          // Only get 3 days of forecast
           if (forecast.length >= 3) {
             break
           }
@@ -223,7 +206,6 @@ async function getWeatherData(lat: number, lng: number): Promise<WeatherData> {
     }
   } catch (error) {
     console.error("Error getting weather data:", error)
-    // Return fallback weather data
     return {
       temperature: 72,
       humidity: 65,
@@ -243,15 +225,8 @@ async function removeAllSequences(text: string, sequence: string) {
   return text.replace(regex, '');
 }
 
-// Get soil data based on location
-// Note: This is a simplified approach as real soil data would require a specialized API
 async function getSoilData(lat: number, lng: number): Promise<SoilData> {
   try {
-    // For a real implementation, you would use a soil data API
-    // Since we don't have a specific soil API, we'll use Gemini to generate plausible soil data
-    // based on the location
-
-    // First, get the location name
     const locationName = await getLocationName(lat, lng)
 
     const prompt = `
@@ -324,17 +299,15 @@ async function getSoilData(lat: number, lng: number): Promise<SoilData> {
         const responseText = data.candidates[0].content.parts[0].text
 
         try {
-          // Try to parse the JSON response
           const cleanResponseText = responseText
-            .replace(/^```json\s*/i, '')  // removes starting ```json or ```
-            .replace(/\s*```$/i, '')      // removes ending ```
+            .replace(/^```json\s*/i, '')
+            .replace(/\s*```$/i, '')
             .replace("```", "")
             .trim();
 
           console.log(cleanResponseText);
 
           const soilData = JSON.parse(cleanResponseText);
-          // Validate the soil data
           if (
             soilData.soilType &&
             typeof soilData.ph === "number" &&
@@ -356,10 +329,7 @@ async function getSoilData(lat: number, lng: number): Promise<SoilData> {
       console.error("Error calling Gemini API for soil data:", apiError)
     }
 
-    // If we couldn't get soil data from Gemini, use region-based fallback
-    // This is a simplified approach - in a real app, you'd use a soil database
     const regionSoilTypes: { [key: string]: SoilData } = {
-      // Eastern US
       NY: {
         soilType: "Silt Loam",
         ph: 6.2,
@@ -376,8 +346,6 @@ async function getSoilData(lat: number, lng: number): Promise<SoilData> {
         moisture: 15.8,
         texture: { clay: 18, silt: 62, sand: 20 },
       },
-
-      // Midwest
       IL: {
         soilType: "Silty Clay Loam",
         ph: 6.8,
@@ -402,8 +370,6 @@ async function getSoilData(lat: number, lng: number): Promise<SoilData> {
         moisture: 14.0,
         texture: { clay: 20, silt: 60, sand: 20 },
       },
-
-      // South
       TX: {
         soilType: "Clay",
         ph: 7.8,
@@ -428,8 +394,6 @@ async function getSoilData(lat: number, lng: number): Promise<SoilData> {
         moisture: 14.6,
         texture: { clay: 20, silt: 60, sand: 20 },
       },
-
-      // West
       CA: {
         soilType: "Sandy Loam",
         ph: 7.2,
@@ -448,14 +412,11 @@ async function getSoilData(lat: number, lng: number): Promise<SoilData> {
       },
     }
 
-    // Get the state from coordinates
     const state = await getStateFromCoordinates(lat, lng)
 
-    // Return soil data for the state, or default to Kentucky if not found
     return regionSoilTypes[state] || regionSoilTypes["KY"]
   } catch (error) {
     console.error("Error getting soil data:", error)
-    // Return default soil data
     return {
       soilType: "Loam",
       ph: 6.5,
@@ -471,7 +432,6 @@ async function getSoilData(lat: number, lng: number): Promise<SoilData> {
   }
 }
 
-// Get crop recommendations using USDA data and Gemini AI
 export async function getCropRecommendations(
   lat: number,
   lng: number,
@@ -480,28 +440,25 @@ export async function getCropRecommendations(
   weatherData: WeatherData,
 ): Promise<CropRecommendation[]> {
   try {
-    // Get USDA crop statistics for the state
     let cropStats = []
-    let state = "KY" // Default to Kentucky
+    let state = "KY"
 
     try {
       state = await getStateFromCoordinates(lat, lng)
 
       try {
         const controller = new AbortController()
-        const timeoutId = setTimeout(() => controller.abort(), 8000) // Increase timeout to 8 seconds
+        const timeoutId = setTimeout(() => controller.abort(), 8000)
 
-        // Add a try-catch block specifically for the fetch operation
         try {
-          // Note: The USDA API can be unreliable, so we'll handle failures gracefully
           console.log(
             "USDA API Debug - Request URL:",
-            `https://quickstats.nass.usda.gov/api/api_GET/?key=${USDA_API_KEY}&source_desc=SURVEY&sector_desc=CROPS&state_alpha=${state}&year=2022&format=JSON`,
+            `https://quickstats.nass.usda.gov/api/api_GET/?key=${USDA_API_KEY}&source_desc=SURVEY§or_desc=CROPS&state_alpha=${state}&year=2022&format=JSON`,
           )
           console.log("USDA API Debug - API Key:", USDA_API_KEY ? "API key exists" : "API key is missing")
           console.log("USDA API Debug - State:", state)
           const usdaResponse = await fetch(
-            `https://quickstats.nass.usda.gov/api/api_GET/?key=${USDA_API_KEY}&source_desc=SURVEY&sector_desc=CROPS&state_alpha=${state}&year=2022&format=JSON`,
+            `https://quickstats.nass.usda.gov/api/api_GET/?key=${USDA_API_KEY}&source_desc=SURVEY§or_desc=CROPS&state_alpha=${state}&year=2022&format=JSON`,
             { signal: controller.signal },
           )
 
@@ -516,7 +473,6 @@ export async function getCropRecommendations(
 
           const usdaData = await usdaResponse.json()
 
-          // Process USDA data to get top crops for the region
           if (usdaData && usdaData.data) {
             cropStats = processCropStats(usdaData)
           }
@@ -529,7 +485,6 @@ export async function getCropRecommendations(
           )
         } catch (fetchError) {
           console.error("Error fetching from USDA API:", fetchError)
-          // Continue with empty crop stats and use fallback data
           cropStats = []
           console.log("USDA API Debug - Fetch error details:", fetchError)
           console.log("USDA API Debug - Error type:", fetchError instanceof Error ? "Error object" : typeof fetchError)
@@ -540,21 +495,16 @@ export async function getCropRecommendations(
         }
       } catch (usdaError) {
         console.error("Error processing USDA data:", usdaError)
-        // Continue with empty crop stats
         cropStats = []
       }
     } catch (usdaError) {
       console.error("Error fetching USDA data:", usdaError)
-      // Continue with empty crop stats
       cropStats = []
     }
 
-    // Use Gemini API to analyze and recommend crops based on soil, weather, and regional data
     try {
-      // Get location name for context
       const locationName = await getLocationName(lat, lng)
 
-      // Create a simplified prompt that's less likely to cause parsing issues
       const prompt = `
         As an agricultural expert, analyze this data and recommend the top 3 most profitable crops for a ${acres} acre farm.
         
@@ -599,7 +549,6 @@ export async function getCropRecommendations(
       `
 
       try {
-        // Use the Gemini 1.5 Flash model for faster responses
         const geminiResponse = await fetch(
           `https://generativelanguage.googleapis.com/v1/models/gemini-1.5-flash:generateContent?key=${PUBLIC_GEMINI_API_KEY}`,
           {
@@ -629,10 +578,8 @@ export async function getCropRecommendations(
 
         const geminiData = await geminiResponse.json()
 
-        // Log the full response for debugging
         console.log("Gemini API response:", JSON.stringify(geminiData))
 
-        // Extract text from Gemini response
         if (
           geminiData &&
           geminiData.candidates &&
@@ -645,16 +592,12 @@ export async function getCropRecommendations(
           let responseText = geminiData.candidates[0].content.parts[0].text
           console.log("Gemini response text:", responseText)
 
-          // Check if the response is wrapped in markdown code blocks
           if (responseText.startsWith("```json") && responseText.includes("```")) {
-            // Extract the JSON content from the markdown code block
             responseText = responseText.replace(/```json\n|\n```/g, "")
           }
 
-          // Try multiple approaches to extract JSON
           let recommendations
 
-          // Approach 1: Try to parse the entire response as JSON
           try {
             recommendations = JSON.parse(responseText.trim())
             if (Array.isArray(recommendations) && recommendations.length > 0) {
@@ -664,9 +607,8 @@ export async function getCropRecommendations(
             console.log("First parse attempt failed:", parseError1)
           }
 
-          // Approach 2: Try to extract JSON using regex
           try {
-            const jsonMatch = responseText.match(/\[\s*\{[\s\S]*\}\s*\]/)
+            const jsonMatch = responseText.match(/$$ \s*\{[\s\S]*\}\s* $$/)
             if (jsonMatch) {
               recommendations = JSON.parse(jsonMatch[0])
               if (Array.isArray(recommendations) && recommendations.length > 0) {
@@ -677,7 +619,6 @@ export async function getCropRecommendations(
             console.log("Second parse attempt failed:", parseError2)
           }
 
-          // Approach 3: Try to extract JSON by finding the first '[' and last ']'
           try {
             const startIndex = responseText.indexOf("[")
             const endIndex = responseText.lastIndexOf("]")
@@ -694,7 +635,6 @@ export async function getCropRecommendations(
           }
         }
 
-        // If we couldn't parse the JSON, create a simple recommendation based on the soil type
         console.log("All JSON parsing attempts failed, using fallback recommendations")
         return generateFallbackRecommendations(soilData, acres)
       } catch (apiError) {
@@ -707,7 +647,6 @@ export async function getCropRecommendations(
     }
   } catch (error) {
     console.error("Error getting crop recommendations:", error)
-    // Return fallback data
     return [
       {
         crop: "Alfalfa",
@@ -740,9 +679,7 @@ export async function getCropRecommendations(
   }
 }
 
-// helper fn to make some backup recommendations based on soil type
 function generateFallbackRecommendations(soilData: SoilData, acres: number): CropRecommendation[] {
-  // diff recommendations for each soil type
   const soilTypeRecommendations: { [key: string]: CropRecommendation[] } = {
     Loam: [
       {
@@ -862,8 +799,7 @@ function generateFallbackRecommendations(soilData: SoilData, acres: number): Cro
     ],
   }
 
-  // Determine which soil category to use
-  let soilCategory = "Loam" // Default
+  let soilCategory = "Loam"
 
   if (soilData.soilType.includes("Clay")) {
     soilCategory = "Clay"
@@ -876,10 +812,8 @@ function generateFallbackRecommendations(soilData: SoilData, acres: number): Cro
   return soilTypeRecommendations[soilCategory] || soilTypeRecommendations["Loam"]
 }
 
-// Get crop rotation plans using Gemini AI
 export async function getCropRotationPlans(recommendations: CropRecommendation[], soilData: SoilData): Promise<any> {
   try {
-    // Create a simplified prompt that's less likely to cause parsing issues
     const prompt = `
       As an agricultural expert, create optimal 3-year and 5-year crop rotation plans using these recommended crops and soil data.
       
@@ -938,7 +872,7 @@ export async function getCropRotationPlans(recommendations: CropRecommendation[]
                 },
               ],
               generationConfig: {
-                temperature: 0.1, // Lower temperature for more deterministic output
+                temperature: 0.1,
                 topK: 40,
                 topP: 0.95,
                 maxOutputTokens: 1024,
@@ -953,10 +887,8 @@ export async function getCropRotationPlans(recommendations: CropRecommendation[]
 
         const geminiData = await geminiResponse.json()
 
-        // Log the full response for debugging
         console.log("Gemini API rotation plans response:", JSON.stringify(geminiData))
 
-        // Extract text from Gemini response
         if (
           geminiData &&
           geminiData.candidates &&
@@ -969,16 +901,12 @@ export async function getCropRotationPlans(recommendations: CropRecommendation[]
           let responseText = geminiData.candidates[0].content.parts[0].text
           console.log("Gemini rotation plans response text:", responseText)
 
-          // Check if the response is wrapped in markdown code blocks
           if (responseText.startsWith("```json") && responseText.includes("```")) {
-            // Extract the JSON content from the markdown code block
             responseText = responseText.replace(/```json\n|\n```/g, "")
           }
 
-          // Try multiple approaches to extract JSON
           let rotationPlans
 
-          // Approach 1: Try to parse the entire response as JSON
           try {
             rotationPlans = JSON.parse(responseText.trim())
             if (rotationPlans && rotationPlans.threeYearPlans && rotationPlans.fiveYearPlans) {
@@ -988,7 +916,6 @@ export async function getCropRotationPlans(recommendations: CropRecommendation[]
             console.log("First rotation plans parse attempt failed:", parseError1)
           }
 
-          // Approach 2: Try to extract JSON using regex
           try {
             const jsonMatch = responseText.match(/\{\s*"threeYearPlans[\s\S]*\}\s*\}/)
             if (jsonMatch) {
@@ -1001,7 +928,6 @@ export async function getCropRotationPlans(recommendations: CropRecommendation[]
             console.log("Second rotation plans parse attempt failed:", parseError2)
           }
 
-          // Approach 3: Try to extract JSON by finding the first '{' and last '}'
           try {
             const startIndex = responseText.indexOf("{")
             const endIndex = responseText.lastIndexOf("}")
@@ -1018,7 +944,6 @@ export async function getCropRotationPlans(recommendations: CropRecommendation[]
           }
         }
 
-        // If all parsing attempts fail, use fallback data
         console.log("All JSON parsing attempts failed for rotation plans, using fallback data")
         return generateFallbackRotationPlans(recommendations)
       } catch (apiError) {
@@ -1027,35 +952,28 @@ export async function getCropRotationPlans(recommendations: CropRecommendation[]
       }
     } catch (error) {
       console.error("Error getting crop rotation plans:", error)
-      // Return fallback data
       return generateFallbackRotationPlans(recommendations)
     }
   } catch (error) {
     console.error("Error getting crop rotation plans:", error)
-    // Return fallback data
     return generateFallbackRotationPlans(recommendations)
   }
 }
 
-// helper fn to make some backup rotation plans
 function generateFallbackRotationPlans(recommendations: CropRecommendation[]): any {
-  // grab crop names from recommendations
   const cropNames = recommendations.map((rec) => rec.crop)
 
-  // add some common rotation crops if we need more
   const commonRotationCrops = ["Corn", "Soybeans", "Winter Wheat", "Alfalfa", "Barley", "Oats", "Rye", "Clover"]
 
-  // make sure we got at least 5 crops for rotation
   while (cropNames.length < 5) {
     const cropToAdd = commonRotationCrops.find((crop) => !cropNames.includes(crop))
     if (cropToAdd) {
       cropNames.push(cropToAdd)
     } else {
-      break // no more crops to add :(
+      break
     }
   }
 
-  // make the rotation plans
   return {
     threeYearPlans: [
       {
@@ -1087,10 +1005,8 @@ function generateFallbackRotationPlans(recommendations: CropRecommendation[]): a
   }
 }
 
-// Analyze area with all available data
 export async function analyzeArea(lat: number, lng: number, acres: number, regionName: string): Promise<AnalysisData> {
   try {
-    // Get location name
     let locationName
     try {
       locationName = await getLocationName(lat, lng)
@@ -1099,7 +1015,6 @@ export async function analyzeArea(lat: number, lng: number, acres: number, regio
       locationName = "Unknown Location"
     }
 
-    // Get weather data
     let weatherData
     try {
       weatherData = await getWeatherData(lat, lng)
@@ -1118,7 +1033,6 @@ export async function analyzeArea(lat: number, lng: number, acres: number, regio
       }
     }
 
-    // Get soil data
     let soilData
     try {
       soilData = await getSoilData(lat, lng)
@@ -1138,7 +1052,6 @@ export async function analyzeArea(lat: number, lng: number, acres: number, regio
       }
     }
 
-    // Get crop recommendations
     let recommendations
     try {
       recommendations = await getCropRecommendations(lat, lng, acres, soilData, weatherData)
@@ -1147,7 +1060,6 @@ export async function analyzeArea(lat: number, lng: number, acres: number, regio
       recommendations = generateFallbackRecommendations(soilData, acres)
     }
 
-    // Get crop rotation plans
     let rotationPlans
     try {
       rotationPlans = await getCropRotationPlans(recommendations, soilData)
@@ -1167,7 +1079,6 @@ export async function analyzeArea(lat: number, lng: number, acres: number, regio
     }
   } catch (error) {
     console.error("Error analyzing area:", error)
-    // Return fallback data with the helper functions we created
     const fallbackSoilData = {
       soilType: "Loam",
       ph: 6.5,
@@ -1204,4 +1115,3 @@ export async function analyzeArea(lat: number, lng: number, acres: number, regio
     }
   }
 }
-
