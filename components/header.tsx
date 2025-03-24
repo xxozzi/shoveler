@@ -17,7 +17,6 @@ export function Header() {
   const [showUserMenu, setShowUserMenu] = useState(false)
   const searchTimeoutRef = useRef<NodeJS.Timeout | null>(null)
 
-  // Sample data for search results with more Google Maps-like data
   const sampleLocations = [
     {
       id: 1,
@@ -75,8 +74,6 @@ export function Header() {
       type: "Ranch",
     },
   ]
-
-  // Handle scroll effect for header
   useEffect(() => {
     const handleScroll = () => {
       if (window.scrollY > 10) {
@@ -89,21 +86,17 @@ export function Header() {
     window.addEventListener("scroll", handleScroll)
     return () => window.removeEventListener("scroll", handleScroll)
   }, [])
-
-  // Handle search with TomTom API
   const handleSearch = (e: React.ChangeEvent<HTMLInputElement>) => {
     const value = e.target.value
     setSearchValue(value)
 
-    // Clear any existing timeout
     if (searchTimeoutRef.current) {
       clearTimeout(searchTimeoutRef.current)
     }
 
     if (value.length > 1) {
-      // Add a small delay to avoid making too many API calls while typing
       searchTimeoutRef.current = setTimeout(() => {
-        // Use TomTom's Fuzzy Search API for autocomplete
+        
         const apiKey = process.env.NEXT_PUBLIC_TOMTOM_API_KEY || "YOUR_TOMTOM_API_KEY"
         const url = `https://api.tomtom.com/search/2/search/${encodeURIComponent(value)}.json?key=${apiKey}&limit=5&countrySet=US&idxSet=Geo,PAD,Str,Addr`
 
@@ -111,7 +104,7 @@ export function Header() {
           .then((response) => response.json())
           .then((data) => {
             if (data.results && data.results.length > 0) {
-              // Transform TomTom results to our format
+              
               const results = data.results.map((result: any) => ({
                 id: result.id,
                 name: result.poi ? result.poi.name : result.address.freeformAddress,
@@ -129,7 +122,6 @@ export function Header() {
           .catch((error) => {
             console.error("Error fetching search results:", error)
 
-            // Fallback to sample data if API fails
             const results = sampleLocations.filter(
               (location) =>
                 location.name.toLowerCase().includes(value.toLowerCase()) ||
@@ -148,11 +140,8 @@ export function Header() {
     setSearchValue(result.address || result.name)
     setSearchResults([])
 
-    // Check if we have coordinates from TomTom
     if (result.lat && result.lng) {
-      // Fly to location
       if (window.mapInstance) {
-        // Add a marker at the location
         addMarkerToLocation(result.lat, result.lng, result.name || result.address)
 
         window.mapInstance.flyTo([result.lat, result.lng], 16, {
@@ -161,7 +150,6 @@ export function Header() {
         })
       }
     } else {
-      // Fallback to geocoding if needed
       const apiKey = process.env.NEXT_PUBLIC_TOMTOM_API_KEY || "YOUR_TOMTOM_API_KEY"
       const geocodeUrl = `https://api.tomtom.com/search/2/geocode/${encodeURIComponent(result.address)}.json?key=${apiKey}`
 
@@ -171,7 +159,6 @@ export function Header() {
           if (data.results && data.results.length > 0) {
             const position = data.results[0].position
             if (window.mapInstance) {
-              // Add a marker at the location
               addMarkerToLocation(position.lat, position.lon, result.name || result.address)
 
               window.mapInstance.flyTo([position.lat, position.lon], 16, {
@@ -187,11 +174,9 @@ export function Header() {
     }
   }
 
-  // fn to add a marker at a location
   const addMarkerToLocation = (lat: number, lng: number, title: string) => {
     if (!window.mapInstance) return
 
-    // clear any markers from prev searches
     if (window.searchMarker) {
       window.mapInstance.removeLayer(window.searchMarker)
     }
@@ -213,10 +198,8 @@ export function Header() {
       iconAnchor: [15, 6],
     })
 
-    // Create and add the marker
     const marker = window.L.marker([lat, lng], { icon: customIcon }).addTo(window.mapInstance)
 
-    // Store the marker reference globally so we can remove it later
     window.searchMarker = marker
   }
 
