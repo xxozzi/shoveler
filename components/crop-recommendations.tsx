@@ -11,7 +11,6 @@ interface CropRecommendationsProps {
 }
 
 export function CropRecommendations({ data }: CropRecommendationsProps) {
-  // Calculate the highest profit for scaling
   const highestProfit = Math.max(
     ...data.recommendations.map((rec: any) => Number.parseFloat(rec.profit.replace("$", "").replace(" per acre", ""))),
   )
@@ -31,7 +30,6 @@ export function CropRecommendations({ data }: CropRecommendationsProps) {
     show: { opacity: 1, y: 0 },
   }
 
-  // Icons for different crops
   const cropIcons: any = {
     Alfalfa: Leaf,
     "Winter Wheat": Wheat,
