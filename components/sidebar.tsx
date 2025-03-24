@@ -11,39 +11,30 @@ export function Sidebar() {
   const handleButtonClick = (buttonName: string) => {
     setActiveButton(activeButton === buttonName ? null : buttonName)
 
-    // Here you would implement the actual functionality for each button
     switch (buttonName) {
       case "draw":
         console.log("Draw tool activated")
-        // You would trigger the draw mode on the map
         break
       case "erase":
         console.log("Erase tool activated")
-        // You would trigger the erase mode on the map
         break
       case "measure":
         console.log("Measure tool activated")
-        // You would trigger the measurement mode on the map
         break
       case "layers":
         console.log("Layers panel opened")
-        // You would open a layers panel
         break
       case "basemap":
         console.log("Basemap selection opened")
-        // You would open a basemap selection panel
         break
       case "download":
         console.log("Download options opened")
-        // You would open download options
         break
       case "share":
         console.log("Share options opened")
-        // You would open share options
         break
       case "settings":
         console.log("Settings opened")
-        // You would open settings
         break
     }
   }
@@ -184,4 +175,3 @@ export function Sidebar() {
     </TooltipProvider>
   )
 }
-
