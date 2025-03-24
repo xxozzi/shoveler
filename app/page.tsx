@@ -13,7 +13,6 @@ import { X } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { analyzeArea } from "@/services/api-service"
 
-// Dynamically import the map components to avoid SSR issues
 const MapWithNoSSR = dynamic(() => import("@/components/map"), {
   ssr: false,
 })
@@ -25,14 +24,10 @@ export default function Home() {
   const [activeTab, setActiveTab] = useState("analysis")
   const [pendingAnalysis, setPendingAnalysis] = useState(false)
 
-  // Update the handleAreaSelected function to avoid unnecessary state updates
   const handleAreaSelected = (area: any) => {
-    // Only update if the area is different from the current selectedArea
-    // This helps prevent unnecessary re-renders
     if (!selectedArea || selectedArea.name !== area.name || selectedArea.area !== area.area) {
       setSelectedArea(area)
 
-      // If there's a pending analysis request, process it immediately
       if (pendingAnalysis) {
         analyzeAreaData(area)
         setPendingAnalysis(false)
@@ -40,12 +35,9 @@ export default function Home() {
     }
   }
 
-  // Update the analyzeArea function to accept an area parameter
   const analyzeAreaData = async (areaToAnalyze = null) => {
-    // Use the provided area or fall back to the selectedArea state
     const area = areaToAnalyze || selectedArea
 
-    // If no area is available, mark as pending and return
     if (!area) {
       setPendingAnalysis(true)
       return
@@ -54,16 +46,13 @@ export default function Home() {
     setIsAnalyzing(true)
 
     try {
-      // Get the center coordinates of the area
       let lat, lng
 
       if (area.type === "rectangle") {
-        // For rectangles, use the center of the bounds
         const bounds = area.coordinates
         lat = (bounds[0].lat + bounds[2].lat) / 2
         lng = (bounds[0].lng + bounds[2].lng) / 2
       } else {
-        // For polygons, calculate the centroid
         let sumLat = 0,
           sumLng = 0
         area.coordinates.forEach((coord: any) => {
@@ -75,10 +64,8 @@ export default function Home() {
       }
 
       try {
-        // Call the API service to analyze the area
         const analysisData = await analyzeArea(lat, lng, Number.parseFloat(area.area), area.name)
 
-        // Update the state with the analysis data
         setAreaData(analysisData)
       } catch (apiError) {
         console.error("Error analyzing area:", apiError)
@@ -94,7 +81,6 @@ export default function Home() {
     }
   }
 
-  // helper fn to get some backup data when api fails
   const getFallbackData = (area: any) => {
     return {
       location: "Fayette County, Kentucky",
