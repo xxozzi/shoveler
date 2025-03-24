@@ -8,7 +8,6 @@ import dynamic from "next/dynamic"
 import { useMap } from "react-leaflet"
 import { Input } from "@/components/ui/input"
 
-// Declare global window interface to add our custom properties
 declare global {
   interface Window {
     mapInstance: any
@@ -17,24 +16,20 @@ declare global {
   }
 }
 
-// Dynamically import Leaflet components with no SSR
 const MapContainer = dynamic(() => import("react-leaflet").then((mod) => mod.MapContainer), { ssr: false })
 const TileLayer = dynamic(() => import("react-leaflet").then((mod) => mod.TileLayer), { ssr: false })
 const FeatureGroup = dynamic(() => import("react-leaflet").then((mod) => mod.FeatureGroup), { ssr: false })
 
-// This component forces the map to invalidate its size after mounting
 const MapResizer = () => {
   const map = useMap()
 
   useEffect(() => {
     if (!map) return
 
-    // Force the map to update its size after it's mounted
     setTimeout(() => {
       map.invalidateSize()
     }, 100)
 
-    // Also update on window resize
     const handleResize = () => {
       map.invalidateSize()
     }
@@ -46,7 +41,6 @@ const MapResizer = () => {
   return null
 }
 
-// Component to add custom styles
 const CustomStyles = () => {
   useEffect(() => {
     // Add custom CSS for styling
@@ -64,7 +58,6 @@ const CustomStyles = () => {
       display: none !important;
     }
     
-    /* Style the attribution */
     .leaflet-control-attribution {
       background-color: rgba(0, 0, 0, 0.3) !important;
       backdrop-filter: blur(8px) !important;
@@ -210,15 +203,15 @@ const CustomStyles = () => {
   return null
 }
 
-// Fix for Leaflet Draw - ensure the GeometryUtil is properly initialized
+
+
+// ngl not necessary 
 const LeafletDrawFix = () => {
   useEffect(() => {
     if (!window.L) return
 
-    // Make sure L.GeometryUtil is available
     if (!window.L.GeometryUtil) {
       window.L.GeometryUtil = {
-        // Add the geodesicArea method if it doesn't exist
         geodesicArea: (latLngs: any[]) => {
           let area = 0
           const d2r = Math.PI / 180
@@ -239,7 +232,6 @@ const LeafletDrawFix = () => {
       }
     }
 
-    // Add CSS to fix icon centering
     const style = document.createElement("style")
     style.innerHTML = `
       .leaflet-container button svg {
@@ -265,7 +257,6 @@ const LeafletDrawFix = () => {
   return null
 }
 
-// Sample data for search results
 const sampleLocations = [
   {
     id: 1,
@@ -346,11 +337,9 @@ export default function MapClient({ onAreaSelected, onAnalyze, isAnalyzing }: Ma
   const [locationMarker, setLocationMarker] = useState<any>(null)
   const [locationInfoVisible, setLocationInfoVisible] = useState(false)
 
-  // Fix Leaflet icon issues
   useEffect(() => {
     if (!window.L) return
 
-    // This is crucial for the icons to work
     delete (window.L.Icon.Default.prototype as any)._getIconUrl
 
     window.L.Icon.Default.mergeOptions({
@@ -360,13 +349,11 @@ export default function MapClient({ onAreaSelected, onAnalyze, isAnalyzing }: Ma
     })
   }, [])
 
-  // Handle search
   const handleSearch = (e: React.ChangeEvent<HTMLInputElement>) => {
     const value = e.target.value
     setSearchValue(value)
 
     if (value.length > 1) {
-      // Filter sample locations based on search term
       const results = sampleLocations.filter(
         (location) =>
           location.name.toLowerCase().includes(value.toLowerCase()) ||
@@ -378,12 +365,10 @@ export default function MapClient({ onAreaSelected, onAnalyze, isAnalyzing }: Ma
     }
   }
 
-  // Handle search result click
   const handleResultClick = (result: any) => {
     setSearchValue(result.name)
     setSearchResults([])
 
-    // Zoom to the selected location
     if (mapRef.current) {
       mapRef.current.flyTo([result.lat, result.lng], 14, {
         animate: true,
@@ -392,28 +377,22 @@ export default function MapClient({ onAreaSelected, onAnalyze, isAnalyzing }: Ma
     }
   }
 
-  // Custom toolbar for drawing tools
   const MapControls = () => {
     const map = useMap()
 
-    // Store map reference
     useEffect(() => {
       if (map) {
         mapRef.current = map
       }
     }, [map])
 
-    // Make map instance and marker function available globally
     useEffect(() => {
       if (map) {
         window.mapInstance = map
         window.showLocationMarker = (location) => {
-          // Clear any existing location marker
           if (locationMarker) {
             map.removeLayer(locationMarker)
           }
-
-          // Create a new marker
           const marker = window.L.marker([location.lat, location.lng], {
             icon: window.L.divIcon({
               className: "location-marker",
@@ -437,7 +416,6 @@ export default function MapClient({ onAreaSelected, onAnalyze, isAnalyzing }: Ma
       }
     }, [map, locationMarker])
 
-    // Function to clear edit markers when deselecting
     const clearEditMarkers = () => {
       if (!map) return
 
@@ -451,16 +429,13 @@ export default function MapClient({ onAreaSelected, onAnalyze, isAnalyzing }: Ma
     const clearSelection = (id?: string) => {
       if (!map) return
 
-      // Clear edit markers first
       clearEditMarkers()
 
       if (id) {
-        // Remove specific selection
         const selection = selections.find((s) => s.id === id)
         if (selection && featureGroupRef.current) {
           featureGroupRef.current.removeLayer(selection.shape)
 
-          // Remove the label if it exists
           if (selection.label) {
             map.removeLayer(selection.label)
           }
@@ -473,11 +448,9 @@ export default function MapClient({ onAreaSelected, onAnalyze, isAnalyzing }: Ma
           }
         }
       } else if (activeSelection) {
-        // Only clear active selection when delete button is clicked
         if (featureGroupRef.current) {
           featureGroupRef.current.removeLayer(activeSelection.shape)
 
-          // Remove the label if it exists
           if (activeSelection.label) {
             map.removeLayer(activeSelection.label)
           }
@@ -489,7 +462,6 @@ export default function MapClient({ onAreaSelected, onAnalyze, isAnalyzing }: Ma
       }
     }
 
-    // Create a vertex marker with consistent style
     const createVertexMarker = (latlng: any, isDraggable = false) => {
       if (isDraggable) {
         return window.L.marker(latlng, {
@@ -513,7 +485,6 @@ export default function MapClient({ onAreaSelected, onAnalyze, isAnalyzing }: Ma
       }
     }
 
-    // Check if a point is close to another point
     const isPointNearPoint = (point1: any, point2: any, pixelDistance = 15) => {
       const p1Pixel = map.latLngToContainerPoint(point1)
       const p2Pixel = map.latLngToContainerPoint(point2)
@@ -523,7 +494,6 @@ export default function MapClient({ onAreaSelected, onAnalyze, isAnalyzing }: Ma
     const drawRectangle = () => {
       if (!window.L || !map) return
 
-      // Deactivate any other active tool
       if (activeDrawTool === "polygon") {
         map.off("click")
         map.off("dblclick")
@@ -536,13 +506,11 @@ export default function MapClient({ onAreaSelected, onAnalyze, isAnalyzing }: Ma
       let vertexMarkers: any[] = []
 
       const onMouseDown = (e: any) => {
-        // Prevent click-through to map
         e.originalEvent.stopPropagation()
         e.originalEvent.preventDefault()
 
         startPoint = e.latlng
 
-        // Add vertex marker for starting point
         const startMarker = createVertexMarker(startPoint)
         startMarker.addTo(map)
         vertexMarkers.push(startMarker)
@@ -558,7 +526,6 @@ export default function MapClient({ onAreaSelected, onAnalyze, isAnalyzing }: Ma
         if (startPoint) {
           const bounds = window.L.latLngBounds(startPoint, e.latlng)
 
-          // Update or create rectangle
           if (rectangle) {
             rectangle.setBounds(bounds)
           } else {
@@ -568,10 +535,7 @@ export default function MapClient({ onAreaSelected, onAnalyze, isAnalyzing }: Ma
               fillOpacity: 0,
             }).addTo(map)
           }
-
-          // Update or create vertex markers
           if (vertexMarkers.length === 1) {
-            // Add the other 3 corners
             const corners = [bounds.getNorthEast(), bounds.getSouthEast(), bounds.getSouthWest()]
 
             corners.forEach((corner) => {
@@ -580,7 +544,6 @@ export default function MapClient({ onAreaSelected, onAnalyze, isAnalyzing }: Ma
               vertexMarkers.push(marker)
             })
           } else if (vertexMarkers.length === 4) {
-            // Update the positions of the 4 corners
             const corners = [bounds.getNorthWest(), bounds.getNorthEast(), bounds.getSouthEast(), bounds.getSouthWest()]
 
             vertexMarkers.forEach((marker, index) => {
@@ -597,30 +560,23 @@ export default function MapClient({ onAreaSelected, onAnalyze, isAnalyzing }: Ma
           document.removeEventListener("mouseup", onMouseUp)
 
           map.dragging.enable()
-
-          // Remove vertex markers
           vertexMarkers.forEach((marker) => map.removeLayer(marker))
           vertexMarkers = []
 
-          // Calculate area
           const bounds = rectangle.getBounds()
           const corners = [bounds.getNorthWest(), bounds.getNorthEast(), bounds.getSouthEast(), bounds.getSouthWest()]
 
-          // Calculate area in acres (approximate)
           const areaInSqMeters = window.L.GeometryUtil.geodesicArea(corners)
           const areaInAcres = areaInSqMeters * 0.000247105
 
-          // Create unique ID
           const id = `rect-${Date.now()}`
           const name = `Region ${selections.length + 1}`
 
-          // Add animation class
           const path = rectangle.getElement()
           if (path) {
             path.classList.add("fill-animation")
           }
 
-          // Add the rectangle to selections
           const newSelection: Selection = {
             id,
             shape: rectangle,
@@ -630,29 +586,22 @@ export default function MapClient({ onAreaSelected, onAnalyze, isAnalyzing }: Ma
             coordinates: corners,
           }
 
-          // Add to feature group
           if (featureGroupRef.current) {
             featureGroupRef.current.addLayer(rectangle)
 
-            // Make clickable for selection
             rectangle.on("click", (e: any) => {
-              // Stop propagation to prevent map click
               window.L.DomEvent.stopPropagation(e)
 
-              // Use the selectRegion function
               selectRegion(newSelection)
             })
           }
-
-          // Calculate center for label
           const center = bounds.getCenter()
 
-          // Add label with improved styling
           const icon = window.L.divIcon({
             className: "region-label",
             html: `<div class="bg-black/50 text-white px-3 py-1 rounded text-sm whitespace-nowrap text-center">${name}</div>`,
             iconSize: [null, 20], // Allow width to grow with content
-            iconAnchor: [null, 10], // Center horizontally
+            iconAnchor: [null, 10], 
           })
 
           const label = window.L.marker(center, {
@@ -662,16 +611,12 @@ export default function MapClient({ onAreaSelected, onAnalyze, isAnalyzing }: Ma
           }).addTo(map)
 
           newSelection.label = label
-
-          // Add to selections and set as active
           setSelections((prev) => [...prev, newSelection])
 
-          // Set as active selection after state update
           setTimeout(() => {
             setActiveSelection(newSelection)
             setIsAnalyzeActive(true)
 
-            // Notify parent of the selected area
             onAreaSelected({
               type: newSelection.type,
               coordinates: newSelection.coordinates,
@@ -679,11 +624,9 @@ export default function MapClient({ onAreaSelected, onAnalyze, isAnalyzing }: Ma
               name: newSelection.name,
             })
 
-            // Show vertices for editing
             showVerticesForSelection(newSelection)
           }, 0)
 
-          // Clean up
           map.off("mousedown", onMouseDown)
           setActiveDrawTool(null)
         }
@@ -695,7 +638,6 @@ export default function MapClient({ onAreaSelected, onAnalyze, isAnalyzing }: Ma
     const drawPolygon = () => {
       if (!window.L || !map) return
 
-      // Deactivate any other active tool
       if (activeDrawTool === "rectangle") {
         map.off("mousedown")
       }
@@ -708,19 +650,16 @@ export default function MapClient({ onAreaSelected, onAnalyze, isAnalyzing }: Ma
       const SNAP_DISTANCE = 15 // pixels
 
       const onClick = (e: any) => {
-        // Prevent click-through to map
         e.originalEvent.stopPropagation()
 
         let pointToAdd = e.latlng
 
         // Check if we're closing the polygon by clicking near the first point
         if (points.length > 2 && isPointNearPoint(pointToAdd, points[0], SNAP_DISTANCE)) {
-          // Use the first point to close the polygon perfectly
           finishPolygon()
           return
         }
 
-        // Check if the point is near any existing point (for snapping)
         for (let i = 0; i < points.length; i++) {
           if (isPointNearPoint(pointToAdd, points[i], SNAP_DISTANCE)) {
             pointToAdd = points[i]
@@ -730,12 +669,10 @@ export default function MapClient({ onAreaSelected, onAnalyze, isAnalyzing }: Ma
 
         points.push(pointToAdd)
 
-        // Add a marker at each vertex - use the same style as edit markers
         const marker = createVertexMarker(pointToAdd)
         marker.addTo(map)
         markers.push(marker)
 
-        // Update or create polyline
         if (polyline) {
           polyline.setLatLngs(points)
         } else {
@@ -747,7 +684,6 @@ export default function MapClient({ onAreaSelected, onAnalyze, isAnalyzing }: Ma
       }
 
       const onDblClick = (e: any) => {
-        // Prevent click-through to map
         e.originalEvent.stopPropagation()
 
         if (points.length >= 3) {
@@ -760,16 +696,14 @@ export default function MapClient({ onAreaSelected, onAnalyze, isAnalyzing }: Ma
           map.off("click", onClick)
           map.off("dblclick", onDblClick)
 
-          // Remove the polyline
           if (polyline) {
             map.removeLayer(polyline)
           }
 
-          // Create the final polygon with fill animation
           const polygon = window.L.polygon(points, {
             color: "#3FB911",
             weight: 2,
-            fillOpacity: 0.2, // Set fill immediately for final polygon
+            fillOpacity: 0.2,
           }).addTo(map)
 
           const path = polygon.getElement()
@@ -777,15 +711,12 @@ export default function MapClient({ onAreaSelected, onAnalyze, isAnalyzing }: Ma
             path.classList.add("fill-animation")
           }
 
-          // Create unique ID
           const id = `poly-${Date.now()}`
           const name = `Region ${selections.length + 1}`
 
-          // Calculate area in acres
           const areaInSqMeters = window.L.GeometryUtil.geodesicArea(points)
           const areaInAcres = areaInSqMeters * 0.000247105
 
-          // Calculate centroid for label
           let lat = 0,
             lng = 0
           for (let i = 0; i < points.length; i++) {
@@ -794,7 +725,6 @@ export default function MapClient({ onAreaSelected, onAnalyze, isAnalyzing }: Ma
           }
           const center = window.L.latLng(lat / points.length, lng / points.length)
 
-          // Create selection object
           const newSelection: Selection = {
             id,
             shape: polygon,
@@ -804,26 +734,21 @@ export default function MapClient({ onAreaSelected, onAnalyze, isAnalyzing }: Ma
             coordinates: points,
           }
 
-          // Add to feature group
           if (featureGroupRef.current) {
             featureGroupRef.current.addLayer(polygon)
 
-            // Make clickable for selection
             polygon.on("click", (e: any) => {
-              // Stop propagation to prevent map click
               window.L.DomEvent.stopPropagation(e)
 
-              // Use the selectRegion function
               selectRegion(newSelection)
             })
           }
 
-          // Add label with improved styling
           const icon = window.L.divIcon({
             className: "region-label",
             html: `<div class="bg-black/50 text-white px-3 py-1 rounded text-sm whitespace-nowrap text-center">${name}</div>`,
-            iconSize: [null, 20], // Allow width to grow with content
-            iconAnchor: [null, 10], // Center horizontally
+            iconSize: [null, 20], 
+            iconAnchor: [null, 10],
           })
 
           const label = window.L.marker(center, {
@@ -834,18 +759,14 @@ export default function MapClient({ onAreaSelected, onAnalyze, isAnalyzing }: Ma
 
           newSelection.label = label
 
-          // Remove vertex markers after polygon is complete
           markers.forEach((marker) => map.removeLayer(marker))
 
-          // Add to selections and set as active
           setSelections((prev) => [...prev, newSelection])
 
-          // Set as active selection after state update
           setTimeout(() => {
             setActiveSelection(newSelection)
             setIsAnalyzeActive(true)
 
-            // Notify parent of the selected area
             onAreaSelected({
               type: newSelection.type,
               coordinates: newSelection.coordinates,
@@ -853,7 +774,6 @@ export default function MapClient({ onAreaSelected, onAnalyze, isAnalyzing }: Ma
               name: newSelection.name,
             })
 
-            // Show vertices for editing
             showVerticesForSelection(newSelection)
           }, 0)
 
@@ -867,7 +787,6 @@ export default function MapClient({ onAreaSelected, onAnalyze, isAnalyzing }: Ma
 
     const handleAnalyze = () => {
       if (activeSelection) {
-        // Make sure we're using the latest selection data
         onAreaSelected({
           type: activeSelection.type,
           coordinates: activeSelection.coordinates,
@@ -875,7 +794,6 @@ export default function MapClient({ onAreaSelected, onAnalyze, isAnalyzing }: Ma
           name: activeSelection.name,
         })
 
-        // Directly call onAnalyze to start the analysis
         onAnalyze()
       }
     }
@@ -887,11 +805,9 @@ export default function MapClient({ onAreaSelected, onAnalyze, isAnalyzing }: Ma
             if (s.id === isNaming) {
               const updated = { ...s, name: nameInput.trim() }
 
-              // Update the label
               if (updated.label) {
                 map.removeLayer(updated.label)
 
-                // Calculate center
                 let center
                 if (updated.type === "rectangle") {
                   center = updated.shape.getBounds().getCenter()
@@ -906,12 +822,11 @@ export default function MapClient({ onAreaSelected, onAnalyze, isAnalyzing }: Ma
                   center = window.L.latLng(lat / latLngs.length, lng / latLngs.length)
                 }
 
-                // Create new label with improved styling
                 const icon = window.L.divIcon({
                   className: "region-label",
                   html: `<div class="bg-black/50 text-white px-3 py-1 rounded text-sm whitespace-nowrap text-center">${nameInput.trim()}</div>`,
-                  iconSize: [null, 20], // Allow width to grow with content
-                  iconAnchor: [null, 10], // Center horizontally
+                  iconSize: [null, 20],
+                  iconAnchor: [null, 10],
                 })
 
                 const label = window.L.marker(center, {
@@ -936,7 +851,6 @@ export default function MapClient({ onAreaSelected, onAnalyze, isAnalyzing }: Ma
           }
           setActiveSelection(updated)
 
-          // Notify parent of the updated selection
           onAreaSelected({
             type: updated.type,
             coordinates: updated.coordinates,
@@ -951,7 +865,6 @@ export default function MapClient({ onAreaSelected, onAnalyze, isAnalyzing }: Ma
     }
 
     const showVerticesForSelection = (selection: Selection) => {
-      // Remove any existing edit markers
       clearEditMarkers()
 
       if (!selection) return
@@ -959,7 +872,6 @@ export default function MapClient({ onAreaSelected, onAnalyze, isAnalyzing }: Ma
       const vertexMarkers: any[] = []
 
       if (selection.type === "rectangle") {
-        // For rectangles, show markers at the 4 corners
         const bounds = selection.shape.getBounds()
         const corners = [bounds.getNorthWest(), bounds.getNorthEast(), bounds.getSouthEast(), bounds.getSouthWest()]
 
@@ -967,20 +879,15 @@ export default function MapClient({ onAreaSelected, onAnalyze, isAnalyzing }: Ma
           const marker = createVertexMarker(corner, true)
           marker.addTo(map)
 
-          // Set a custom property to identify this as an edit marker
           marker._isEditMarker = true
 
           marker.on("drag", (e) => {
-            // Get the new position
             const newPos = e.target.getLatLng()
 
-            // Create a copy of the corners array
             const newCorners = [...corners]
 
-            // Update the dragged corner
             newCorners[index] = newPos
 
-            // Update adjacent corners to maintain rectangle shape
             if (index === 0) {
               // NorthWest
               newCorners[1] = window.L.latLng(newPos.lat, newCorners[1].lng) // NorthEast - same latitude
@@ -999,7 +906,6 @@ export default function MapClient({ onAreaSelected, onAnalyze, isAnalyzing }: Ma
               newCorners[0] = window.L.latLng(newCorners[0].lat, newPos.lng) // NorthWest - same longitude
             }
 
-            // Update all marker positions
             vertexMarkers.forEach((m, i) => {
               if (i !== index) {
                 // Don't update the one being dragged
@@ -1007,18 +913,14 @@ export default function MapClient({ onAreaSelected, onAnalyze, isAnalyzing }: Ma
               }
             })
 
-            // Update the rectangle
             selection.shape.setBounds(window.L.latLngBounds(newCorners[0], newCorners[2]))
 
-            // Recalculate area
             const areaInSqMeters = window.L.GeometryUtil.geodesicArea(newCorners)
             const areaInAcres = areaInSqMeters * 0.000247105
             selection.area = areaInAcres.toFixed(2)
 
-            // Update coordinates
             selection.coordinates = newCorners
 
-            // Update the label position
             if (selection.label) {
               const center = selection.shape.getBounds().getCenter()
               selection.label.setLatLng(center)
@@ -1026,7 +928,6 @@ export default function MapClient({ onAreaSelected, onAnalyze, isAnalyzing }: Ma
           })
 
           marker.on("dragend", () => {
-            // When drag is complete, notify the parent component of the updated selection
             onAreaSelected({
               type: selection.type,
               coordinates: selection.coordinates,
@@ -1038,30 +939,24 @@ export default function MapClient({ onAreaSelected, onAnalyze, isAnalyzing }: Ma
           vertexMarkers.push(marker)
         })
       } else if (selection.type === "polygon") {
-        // For polygons, show markers at each vertex
         const latLngs = selection.shape.getLatLngs()[0]
 
         latLngs.forEach((point, index) => {
           const marker = createVertexMarker(point, true)
           marker.addTo(map)
 
-          // Set a custom property to identify this as an edit marker
           marker._isEditMarker = true
 
           marker.on("drag", (e) => {
-            // Update the polygon shape when a vertex is dragged
             latLngs[index] = e.target.getLatLng()
             selection.shape.setLatLngs(latLngs)
 
-            // Recalculate area
             const areaInSqMeters = window.L.GeometryUtil.geodesicArea(latLngs)
             const areaInAcres = areaInSqMeters * 0.000247105
             selection.area = areaInAcres.toFixed(2)
 
-            // Update coordinates
             selection.coordinates = latLngs
 
-            // Update the label position
             if (selection.label) {
               let lat = 0,
                 lng = 0
@@ -1075,7 +970,6 @@ export default function MapClient({ onAreaSelected, onAnalyze, isAnalyzing }: Ma
           })
 
           marker.on("dragend", () => {
-            // When drag is complete, notify the parent component of the updated selection
             onAreaSelected({
               type: selection.type,
               coordinates: selection.coordinates,
@@ -1090,16 +984,13 @@ export default function MapClient({ onAreaSelected, onAnalyze, isAnalyzing }: Ma
     }
 
     const selectRegion = (selection: Selection) => {
-      // Make sure we're using the most up-to-date selection from state
       const currentSelection = selections.find((s) => s.id === selection.id) || selection
 
       setActiveSelection(currentSelection)
       setIsAnalyzeActive(true)
 
-      // Show vertices for the selected region
       showVerticesForSelection(currentSelection)
 
-      // Notify parent of the selection change
       onAreaSelected({
         type: currentSelection.type,
         coordinates: currentSelection.coordinates,
@@ -1110,7 +1001,6 @@ export default function MapClient({ onAreaSelected, onAnalyze, isAnalyzing }: Ma
 
     return (
       <>
-        {/* Main toolbar in center */}
         <div className="absolute bottom-6 left-0 right-0 z-[1000] flex justify-center">
           <div className="flex items-center bg-black/30 backdrop-blur-md rounded-full px-3 py-2 space-x-2 shadow-lg">
             <button
@@ -1188,7 +1078,6 @@ export default function MapClient({ onAreaSelected, onAnalyze, isAnalyzing }: Ma
           </div>
         </div>
 
-        {/* Selection info and naming */}
         {activeSelection && (
           <div className="absolute top-32 left-1/2 transform -translate-x-1/2 z-[1000] bg-black/30 backdrop-blur-md rounded-lg p-3 shadow-lg">
             <div className="flex items-center space-x-2">
@@ -1246,7 +1135,6 @@ export default function MapClient({ onAreaSelected, onAnalyze, isAnalyzing }: Ma
     )
   }
 
-  // Function to clear edit markers when map is clicked
   const handleMapClick = () => {
     // When clicking on the map (not on a polygon), deselect any active selection
     setActiveSelection(null)
