@@ -1,4 +1,3 @@
-// Create a new file for the MeasurementTool component
 "use client"
 
 import { useState } from "react"
@@ -20,7 +19,6 @@ export function MeasurementTool() {
     const L = window.L
 
     if (isActive) {
-      // Clean up
       if (measureLine) {
         map.removeLayer(measureLine)
         setMeasureLine(null)
@@ -33,7 +31,6 @@ export function MeasurementTool() {
 
       map.off("click")
     } else {
-      // Start measurement
       map.on("click", handleMapClick)
     }
 
@@ -48,11 +45,9 @@ export function MeasurementTool() {
     const newPoints = [...measurePoints, e.latlng]
     setMeasurePoints(newPoints)
 
-    // Add marker
     const marker = L.marker(e.latlng).addTo(map)
     setMeasureMarkers([...measureMarkers, marker])
 
-    // Update or create line
     if (newPoints.length > 1) {
       if (measureLine) {
         measureLine.setLatLngs(newPoints)
@@ -65,13 +60,11 @@ export function MeasurementTool() {
         setMeasureLine(line)
       }
 
-      // Calculate total distance
       let totalDistance = 0
       for (let i = 1; i < newPoints.length; i++) {
         totalDistance += newPoints[i - 1].distanceTo(newPoints[i])
       }
 
-      // Convert to miles
       const distanceInMiles = (totalDistance / 1609.34).toFixed(2)
       setDistance(Number.parseFloat(distanceInMiles))
     }
