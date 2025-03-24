@@ -1,4 +1,3 @@
-// Create a new file for the MapTypeSelector component
 "use client"
 
 import { useState } from "react"
@@ -33,15 +32,12 @@ export function MapTypeSelector() {
     if (typeof window === "undefined") return
 
     const L = window.L
-
-    // Find all existing tile layers and remove them
     map.eachLayer((layer) => {
       if (layer instanceof L.TileLayer) {
         map.removeLayer(layer)
       }
     })
 
-    // Add the new tile layer
     L.tileLayer(mapType.url, {
       attribution: '&copy; <a href="https://www.esri.com">Esri</a>',
     }).addTo(map)
