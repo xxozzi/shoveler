@@ -1,6 +1,5 @@
 import dynamic from "next/dynamic"
 
-// Dynamically import the map component with no SSR
 const MapClientNoSSR = dynamic(() => import("./map-client"), {
   ssr: false,
   loading: () => (
@@ -10,7 +9,6 @@ const MapClientNoSSR = dynamic(() => import("./map-client"), {
   ),
 })
 
-// Update the MapProps interface to include isAnalyzing
 interface MapProps {
   onAreaSelected: (area: any) => void
   onAnalyze: () => void
