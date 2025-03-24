@@ -27,7 +27,6 @@ export function CropRotation({ data }: CropRotationProps) {
     show: { opacity: 1, y: 0 },
   }
 
-  // Color mapping for different crops
   const cropColors: any = {
     Alfalfa: { bg: "bg-green-50 dark:bg-green-900/20", text: "text-green-600 dark:text-green-400" },
     "Winter Wheat": { bg: "bg-amber-50 dark:bg-amber-900/20", text: "text-amber-600 dark:text-amber-400" },
@@ -36,7 +35,6 @@ export function CropRotation({ data }: CropRotationProps) {
     Barley: { bg: "bg-yellow-50 dark:bg-yellow-900/20", text: "text-yellow-600 dark:text-yellow-400" },
   }
 
-  // Default colors for crops not in the mapping
   const defaultColor = { bg: "bg-gray-50 dark:bg-gray-800", text: "text-gray-600 dark:text-gray-400" }
 
   return (
