@@ -36,17 +36,13 @@ export function AskAI({ data }: AskAIProps) {
     e.preventDefault()
     if (!question.trim()) return
 
-    // Add user question to conversation
     setConversation([...conversation, { role: "user", content: question }])
 
-    // Start loading state
     setIsLoading(true)
 
     try {
-      // Use Gemini API to get a response
       const GEMINI_API_KEY = process.env.NEXT_PUBLIC_GEMINI_API_KEY || "YOUR_GEMINI_API_KEY"
 
-      // Create context from the data
       const context = `
         Location: ${data.location}
         Area: ${data.acres} acres
@@ -66,13 +62,11 @@ export function AskAI({ data }: AskAIProps) {
           .join("\n")}
       `
 
-      // Create conversation history
       const history = conversation.map((msg) => ({
         role: msg.role,
         parts: [{ text: msg.content }],
       }))
 
-      // Add the current question
       history.push({
         role: "user",
         parts: [{ text: question }],
@@ -117,7 +111,6 @@ export function AskAI({ data }: AskAIProps) {
 
       let aiResponse = "I'm sorry, I couldn't generate a response. Please try again."
 
-      // Safely extract the response text with proper error checking
       if (
         responseData &&
         responseData.candidates &&
@@ -128,10 +121,8 @@ export function AskAI({ data }: AskAIProps) {
       ) {
         let responseText = responseData.candidates[0].content.parts[0].text || aiResponse
 
-        // Check if the response is wrapped in markdown code blocks and extract the content
         if (responseText.startsWith("```") && responseText.endsWith("```")) {
           const lines = responseText.split("\n")
-          // Remove the first and last lines (markdown code block markers)
           lines.shift()
           lines.pop()
           responseText = lines.join("\n")
@@ -140,7 +131,6 @@ export function AskAI({ data }: AskAIProps) {
         aiResponse = responseText
       }
 
-      // Add AI response to conversation
       setConversation([
         ...conversation,
         { role: "user", content: question },
@@ -149,7 +139,6 @@ export function AskAI({ data }: AskAIProps) {
     } catch (error) {
       console.error("Error getting AI response:", error)
 
-      // Fallback responses if API fails
       const fallbackResponses = [
         `Based on your soil moisture level of ${data.soil.moisture.toFixed(1)}% and the current temperature of ${data.weather.temperature}°F in ${data.location}, I recommend planting your ${data.recommendations[0].crop} in early spring. This will give you the best chance for the projected yield of ${data.recommendations[0].yield}.`,
         `For crop rotation after ${data.recommendations[0].crop}, I would suggest following with ${data.recommendations[1].crop} next season. This will help maintain soil health and nutrient balance while still providing good profitability.`,
@@ -157,7 +146,6 @@ export function AskAI({ data }: AskAIProps) {
         `The soil composition in your selected area is well-suited for ${data.recommendations[0].crop}. To maximize yields, consider applying a balanced fertilizer with emphasis on phosphorus and potassium before planting.`,
       ]
 
-      // Add fallback response to conversation
       setConversation([
         ...conversation,
         { role: "user", content: question },
